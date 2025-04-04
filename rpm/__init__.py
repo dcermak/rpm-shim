@@ -71,6 +71,18 @@ def get_system_sitepackages_and_suffixes() -> List[Dict[str, List[str]]]:
     for interpreter in interpreters:
         if not Path(interpreter).is_file():
             continue
+        # skip interpreters with a different major.minor version than the
+        # running interpreter
+        # importing their rpm module has most likely catastrophic consequences
+        i_major, i_minor, _ = (
+            subprocess.check_output([interpreter, "--version"])
+            .decode()
+            .strip()
+            .removeprefix("Python ")
+            .split(".")
+        )
+        if i_major != majorver or i_minor != minorver:
+            continue
         sitepackages_and_suffixes = get_sitepackages_and_suffixes(interpreter)
         logger.debug(
             f"Collected sitepackages and extension suffixes for {interpreter}:\n"
